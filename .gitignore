@@ -11,3 +11,10 @@ __pycache__/
 #OS files
 .DS_Store
 Thumbs.db
+
+# YOLO weights
+*.pt
+
+# Videos
+*.mp4
+*.avi
