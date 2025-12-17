@@ -18,3 +18,7 @@ Thumbs.db
 # Videos
 *.mp4
 *.avi
+
+# Detection outputs
+outputs/
+*.json
