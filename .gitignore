@@ -12,13 +12,22 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# YOLO weights
+#datasets
+member1_detection/data/soccana_yolo/images
+member1_detection/data/soccana_yolo/labels
+
+#YOLO outputs
+runs/
+*.pt
+*.cache
+
+#YOLO weights
 *.pt
 
-# Videos
+#videos
 *.mp4
 *.avi
 
-# Detection outputs
+#detection outputs
 outputs/
 *.json

@@ -1,0 +1,7 @@
+path: data/soccana_yolo
+
+train: images/train
+val: images/test
+
+nc: 3
+names: ['Player', 'Ball', 'Referee']
