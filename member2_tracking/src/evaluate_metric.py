@@ -84,10 +84,10 @@ def run_evaluation():
         'recall'
     ]
     
-    summary = mh.compute(acc, metrics=metrics_to_show, name='Mio_Tracker')
+    summary = mh.compute(acc, metrics=metrics_to_show, name='Overall Summary')
 
     print("\n" + "="*60)
-    print("             RISULTATI VALIDAZIONE TRACKING")
+    print("             TRACKING VALIDATION RESULTS")
     print("="*60)
     
     
