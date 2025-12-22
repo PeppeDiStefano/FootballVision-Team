@@ -39,3 +39,5 @@ var/
 *.log
 .ipynb_checkpoints
 data/
+run_benchmark.py
+*.csv
