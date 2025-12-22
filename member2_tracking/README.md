@@ -35,7 +35,7 @@ https://github.com/user-attachments/assets/8f8e1563-e1f4-4764-9916-2ce7e9fca493
 Follow these steps to set up the development environment.
 
 ### 1. Create a Virtual Environment
-It is highly recommended to use a virtual environment to isolate dependencies.
+It is better use a virtual environment to isolate dependencies.
 
 **MacOS / Linux:**
 ```bash
@@ -60,12 +60,12 @@ pip install -r requirements.txt
 ## Pipeline Usage
 The project is divided into 4 main steps.
 
-### 1. Data Preparation (convert_det.py)
+### 1. Data Preparation (convert_csv_to_json.py)
 
 The tracker works with JSON files. If your data is in the standard MOTChallenge format (det.txt), you must convert it first.
 
 ```bash
-python src/convert_det.py --input data/path/to/det.txt --output data/input_data.json
+python src/convert_csv_to_json.py --input data/path/to/det.txt --output data/input_data.json
 ```
 
 **Available Flags:**
@@ -76,13 +76,13 @@ python src/convert_det.py --input data/path/to/det.txt --output data/input_data.
 
 This is the main script that processes frames and assigns IDs to players.
 
-**Basic Example (SORT):**
+**SORT Example:**
 
 ```bash
 python src/run_tracker.py --input data/input_data.json --algo sort
 ```
 
-**Advanced Example (ByteTrack):**
+**ByteTrack Example:**
 
 ```bash
 python src/run_tracker.py --input data/input_data.json --algo bytetrack --conf 0.3 --output_name results_bt.json
@@ -118,7 +118,7 @@ To calculate standard metrics like MOTA and IDF1, you need to compare the output
 **Step A: Convert JSON Output to TXT**
 
 ```bash
-python src/convert_results.py --input data/outputs/results_bt.json
+python src/convert_json_to_result.py --input data/outputs/results_bt.json
 ```
 
 This creates a `.txt` file in the same directory as the JSON.
@@ -134,21 +134,3 @@ python src/evaluate_metric.py --gt data/path/to/gt.txt --pred data/outputs/resul
 - `--pred`: Converted prediction file (.txt).
 - `--iou`: IOU Threshold to consider a prediction correct (Default 0.5).
 
-## Full Workflow Example
-
-Here is a sequence of commands to copy and paste to test the entire pipeline on a sample dataset:
-
-```bash
-# 1. Convert detections to JSON
-python src/convert_det.py --input data/SNMOT-060/det/det.txt --output data/dataset.json
-
-# 2. Run ByteTrack (with low confidence for difficult videos)
-python src/run_tracker.py --input data/dataset.json --algo bytetrack --conf 0.3 --output_name bytetrack_result.json
-
-# 3. Visualize result on video
-python src/visualize_tracking.py --video data/SNMOT-060/img1 --json data/outputs/bytetrack_result.json
-
-# 4. Evaluate numerical performance
-python src/convert_results.py --input data/outputs/bytetrack_result.json
-python src/evaluate_metric.py --gt data/SNMOT-060/gt/gt.txt --pred data/outputs/bytetrack_result.txt
-```
