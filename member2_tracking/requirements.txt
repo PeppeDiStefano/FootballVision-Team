@@ -1,0 +1,7 @@
+filterpy==1.4.5
+lapx==0.9.3
+motmetrics==1.4.0
+numpy==1.26.4
+opencv-python==4.12.0.88
+pandas==2.3.3
+scipy==1.13.1
