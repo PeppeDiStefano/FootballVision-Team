@@ -2,11 +2,7 @@ import motmetrics as mm
 import numpy as np
 import os
 import sys
-
-
-BASE_DATA_DIR = "./data"
-GT_FILE_PATH = os.path.join(BASE_DATA_DIR, "SNMOT-060/gt", "gt.txt")
-TS_FILE_PATH = os.path.join(BASE_DATA_DIR, "soccerData_results.txt")
+import argparse
 
 def load_mot_file(filepath):
     """
@@ -17,7 +13,7 @@ def load_mot_file(filepath):
     data = {}
     
     if not os.path.exists(filepath):
-        print(f"CRITICAL ERROR: File not found -> {filepath}")
+        print(f"Error: File not found -> {filepath}")
         return {}
     
     print(f"Loading file: {filepath}...")
@@ -28,11 +24,13 @@ def load_mot_file(filepath):
             if not line: continue
             
             parts = line.split(',')
+            if len(parts) < 6:
+                parts = line.split()
             
             try:
                 frame = int(parts[0])
                 obj_id = int(parts[1])
-
+                
                 bbox = [float(parts[2]), float(parts[3]), float(parts[4]), float(parts[5])]
             except ValueError:
                 continue 
@@ -46,15 +44,22 @@ def load_mot_file(filepath):
     return data
 
 def run_evaluation():
-    gt_data = load_mot_file(GT_FILE_PATH)
-    ts_data = load_mot_file(TS_FILE_PATH)
+    parser = argparse.ArgumentParser(description="Evaluate Tracking Results (MOT Format .txt)")
+    
+    parser.add_argument('--gt', type=str, required=True, help="Path to Ground Truth file (.txt)")
+    parser.add_argument('--pred', type=str, required=True, help="Path to Tracking Result file (.txt)")
+    parser.add_argument('--iou', type=float, default=0.5, help="IOU Threshold for matching (default 0.5)")
+    
+    args = parser.parse_args()
+
+    gt_data = load_mot_file(args.gt)
+    ts_data = load_mot_file(args.pred)
 
     if not gt_data or not ts_data:
-        print("Unable to calculate metrics: missing files.")
-        return
+        print("Error: Unable to calculate metrics due to missing or empty files.")
+        sys.exit(1)
 
-    print("Calculating metrics... (Frame-by-Frame Analysis)")
-
+    print(f"Calculating metrics with IOU Threshold: {args.iou}")
     
     acc = mm.MOTAccumulator(auto_id=True)
 
@@ -67,7 +72,7 @@ def run_evaluation():
         ts_ids = ts_data.get(frame, {}).get('ids', [])
         ts_bboxes = ts_data.get(frame, {}).get('bboxes', [])
 
-        dists = mm.distances.iou_matrix(gt_bboxes, ts_bboxes, max_iou=0.5)
+        dists = mm.distances.iou_matrix(gt_bboxes, ts_bboxes, max_iou=1.0 - args.iou)
         
         acc.update(gt_ids, ts_ids, dists)
 
@@ -86,10 +91,9 @@ def run_evaluation():
     
     summary = mh.compute(acc, metrics=metrics_to_show, name='Overall Summary')
 
-    print("\n" + "="*60)
-    print("             TRACKING VALIDATION RESULTS")
-    print("="*60)
-    
+    print("\n" + "="*80)
+    print("TRACKING VALIDATION RESULTS")
+    print("="*80)
     
     str_summary = mm.io.render_summary(
         summary, 
@@ -106,28 +110,12 @@ def run_evaluation():
         }
     )
     print(str_summary)
-    print("="*60)
-    
-    str_summary = mm.io.render_summary(
-        summary, 
-        formatters=mh.formatters, 
-        namemap={
-            'num_frames': 'Frames',
-            'mota': 'MOTA (%)',
-            'idf1': 'IDF1 (%)',
-            'id_switches': 'ID Sw.',
-            'mostly_tracked': 'MT',
-            'mostly_lost': 'ML',
-            'precision': 'Prec.',
-            'recall': 'Recall'
-        }
-    )
-    print(str_summary)
-    print("="*60)
+    print("="*80)
     print("Legend:")
-    print(" - MOTA: Overall accuracy (Higher is better, max 100%)")
-    print(" - IDF1: Ability to maintain ID (Higher is better)")
-    print(" - ID Sw.: Number of times the tracker confused players (Lower is better)")
+    print(" - MOTA: Multi-Object Tracking Accuracy (Higher is better)")
+    print(" - IDF1: Identification F1 Score (Higher is better, stability)")
+    print(" - ID Sw.: Identity Switches (Lower is better)")
+    print("="*80 + "\n")
 
 if __name__ == "__main__":
     run_evaluation()
