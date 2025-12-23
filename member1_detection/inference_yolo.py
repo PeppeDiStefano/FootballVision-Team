@@ -2,7 +2,7 @@ from ultralytics import YOLO
 import os
 
 #paths
-VIDEO_PATH = "data/raw/video_01.mp4"
+VIDEO_PATH = "data/video_01.mp4"
 OUTPUT_DIR = "outputs"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
