@@ -1,106 +1,129 @@
-# ⚽ Football Vision – Member 3: Homography & Mapping
+# Member 3 — Homography & Top-Down Projection
 
-This module implements the **Homography Transformation and Field Mapping** subsystem for the **Football Vision** project.  
-It converts object detections or tracked player coordinates from the broadcast video perspective into a **top-down field view**, enabling spatial reasoning, positional analytics, and team visualization.
-
----
-
-## Core Logic & Algorithm
-
-The mapping logic is based on **Homography Projection**, a classical computer vision technique for converting points between two planes using a transformation matrix.
-
-### Implementation Overview
-- The **homography matrix** is computed from at least 4 manually selected corresponding points between the broadcast frame and the top-view pitch image.  
-- Once the matrix `H` is generated, it is applied to every detected or tracked coordinate to obtain its equivalent position on the pitch.  
-- The system supports mapping for both **YOLO detections** and **SORT/ByteTrack** tracking outputs.
+This module implements the **homography estimation and projection pipeline** for the FootballVision project.  
+The goal is to map player detections and tracking results from the broadcast video view to a **top-down soccer pitch representation**.
 
 ---
 
-### Modules & Scripts
+## 📌 Overview
 
-| Script | Description |
-|--------|--------------|
-| `extract_frame.py` | Extracts one reference frame from a match video for calibration. |
-| `compute_homography_points.py` | Defines correspondences and computes the homography matrix. |
-| `save_homography_matrix.py` | Saves the computed `H` matrix as `.npy` for later reuse. |
-| `test_homography_mapping.py` | Tests and visualizes the projection of sample points. |
-| `map_detections_to_pitch.py` | Maps YOLO detections (JSON) to top-view pitch coordinates. |
-| `map_tracking_to_pitch.py` | Maps tracking output (SORT/ByteTrack JSON) onto the pitch. |
-| `preview_mapped_detections.py` | Displays a visual preview of all mapped positions. |
+The pipeline follows these steps:
 
----
+1. Extract a reference frame from the broadcast video
+2. Manually select corresponding keypoints on:
+   - the broadcast frame
+   - the pitch template
+3. Compute the homography matrix using **RANSAC**
+4. Visually validate the homography
+5. Project tracked player positions onto the pitch
+6. Generate a top-down visualization video
 
-## Validation & Visualization
-
-The system was validated by comparing projected player positions on the **SoccerNet** broadcast videos against the official **pitch coordinate template**.
-
-- The **red overlay points** show the mapped coordinates of detected/tracked players.  
-- Each frame transformation was visually verified to ensure spatial consistency.  
-- The homography model was evaluated for alignment accuracy and geometric stability.
+All steps are **fully reproducible** and consistent with the project report.
 
 ---
 
-## Integration with Other Modules
+## 📁 Folder Structure
 
-| Input Source | Data Type | Output Target |
-|---------------|------------|----------------|
-| Member 1 – Detection | `detections.json` | Transformed positions on the pitch |
-| Member 2 – Tracking | `tracking_output.json` | Top-down player trajectories |
-| Member 3 – Homography | `H.npy`, `pitch_template.jpg` | Unified pitch-mapped visualizations |
+member3_homography_report/
+│
+├── data/
+│ ├── pitch_template.jpg
+│ ├── homography_frame.jpg
+│ ├── src_points.npy
+│ ├── dst_points.npy
+│
+├── src/
+│ ├── extract_homography_frame.py
+│ ├── select_homography_points.py
+│ ├── compute_homography.py
+│ ├── preview_homography.py
+│ ├── map_tracking_to_pitch.py
+│
+├── outputs/
+│ ├── homography_matrix.npy
+│ ├── tracked_topdown.mp4
+│
+├── README.md
 
-The output from this module feeds directly into the **visual analytics** and **possession estimation** pipeline.
 
 ---
 
-## Parameter Tuning & Optimization
+## ▶️ How to Run the Pipeline
 
-- Optimal calibration achieved using **8–12 point correspondences**.  
-- Homography matrix refined through **least squares error minimization**.  
-- Mapping precision was visually validated using **manual point overlay comparison**.
+All commands must be executed from the `member3_homography_report` directory.
 
----
+### 1️⃣ Extract Reference Frame
 
-
-## Usage Guide
-
-### 1️⃣ Compute Homography
 ```bash
-python src/compute_homography_points.py
-
-→ Click corresponding points on both the broadcast frame and pitch template.  
-→ It will compute and save the transformation matrix as `homography_matrix.npy`.
-
----
-
-### 2️⃣ Verify Mapping
-```bash
-python src/test_homography_mapping.py
-Displays red markers on the top-down field showing where selected points map.
-→ Use this step to confirm alignment visually.
-
-3️⃣ Map YOLO Detections
-python src/map_detections_to_pitch.py
+python src/extract_homography_frame.py
 
 
-→ Loads YOLO detection JSON and projects every bounding box onto the field.
-→ Output video: mapped_output.avi.
+Extracts a central frame from the broadcast video and saves it as:
 
-4️⃣ Map Tracking Results
+data/homography_frame.jpg
+
+2️⃣ Select Homography Points (Manual)
+python src/select_homography_points.py
+
+
+Click corresponding points on the broadcast frame
+
+Press q when done
+
+Click the same points in the same order on the pitch template
+
+Press q to finish
+
+The script saves:
+
+data/src_points.npy
+
+data/dst_points.npy
+
+3️⃣ Compute Homography Matrix
+python src/compute_homography.py
+
+
+Computes the homography using RANSAC
+
+Saves the matrix to:
+
+outputs/homography_matrix.npy
+
+4️⃣ Visual Validation
+python src/preview_homography.py
+
+
+Projects the source points onto the pitch
+
+Red dots: projected points
+
+Green dots: ground truth points
+
+Used for qualitative validation of the homography
+
+5️⃣ Map Tracking Results to Pitch
 python src/map_tracking_to_pitch.py
 
 
-→ Loads tracking JSON (e.g., ByteTrack/SORT) and draws player trajectories.
-→ Output video: tracked_topdown.avi.
+Loads tracking results from member2_tracking
 
-5️⃣ Preview All Mapped Points
-python src/preview_mapped_detections.py
+Applies the homography to player bottom-center positions
 
-→ Quick visualization to ensure all mappings appear correctly over the pitch image.
+Generates the final top-down video:
 
-Dependencies
-Python ≥ 3.9
-NumPy
-OpenCV
-Matplotlib (optional, for visualization)
+outputs/tracked_topdown.mp4
 
+🧠 Notes
 
+All homography computations are performed in pixel coordinates
+
+No scaling or post-hoc normalization is applied
+
+Validation is performed visually, as required by the project scope
+
+The pipeline is modular and independent from detection/tracking code
+
+✅ Output Example
+
+The final output is a top-down video showing player trajectories projected onto the soccer pitch, with consistent player identities and spatial coherence.
